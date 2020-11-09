@@ -1,0 +1,114 @@
+{% extends 'layout.html' %}
+
+{% block header %}
+<h1>{% block title %}Posts{% endblock %}</h1>
+  {% if g.user %}
+<a class="action" href="{{ url_for('blog.create') }}">New</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% for post in posts %}
+<article id="{{ post['id'] }}" class="post">
+    <header>
+        <div>
+            <h1>{{ post['title'] }}</h1>
+            <div class="about">by {{ post['username'] }} on {{ post['created'].strftime('%Y-%m-%d') }}</div>
+        </div>
+        {% if g.user['id'] == post['author_id'] %}
+        <a class="action" href="{{ url_for('blog.update', id=post['id']) }}">Edit</a>
+        {% endif %}
+    </header>
+    <p class="body">{{ post['body'] }}</p>
+    <p>
+        Completed:
+        {% if post['complete'] %}
+        <input id="box{{ post['id'] }}" type="checkbox" checked>
+        {% endif %}
+        {% if not post['complete'] %}
+        <input id="box{{ post['id'] }}" type="checkbox">
+        {% endif %}
+        <script>
+          function change_box() {
+              var url = "/change_complete";
+              var i = {{ post['id'] }};
+              $.ajax({
+                  type: "POST",
+                  url: url,
+                  data: {id:i},
+              }).done(function (result) {
+                  change_flag(result);
+              });
+          }
+
+          function change_flag(value) {
+              //var input = document.getElementById("box"+i);
+              //input.checked = value;
+          }
+          i= {{ post['id'] }};
+          var input = document.getElementById("box"+i);
+          input.onclick = change_box;
+        </script>
+    </p>
+
+    <p>
+        <input id="but{{ post['id'] }}" type="button" value="Delete">
+        <script>
+          function delete_task() {
+              var url = "/delete_task";
+              var i = {{ post['id'] }};
+              $.ajax({
+                  type: "POST",
+                  url: url,
+                  data: {id:i},
+              }).done(function (result) {
+                  change_list(result,i);
+              });
+          }
+
+          function change_list(value,i) {
+              var art = document.getElementById(i);
+              art.innerHTML = "";
+          }
+          i = {{ post['id'] }};
+          var input = document.getElementById("but"+i);
+          input.onclick = delete_task;
+        </script>
+    </p>
+
+    <p id="comments{{ post['id'] }}">
+        <input id="but_com{{ post['id'] }}" type="button" value="Show Comments">
+        <script>
+          function show_com() {
+              var url = "https://jsonplaceholder.typicode.com/posts";
+              i = {{ post['id'] }};
+              $.ajax({
+                  type: "GET",
+                  url: url,
+              }).done(function (result) {
+                  change_com(result,i);
+              });
+          }
+
+          function change_com(result,i) {
+              mas = JSON.stringify(result[i % 100]);
+              ob = JSON.parse(mas);
+              p = document.getElementById("comments" + i);
+              h5 = document.createElement('h5');
+              h6 = document.createElement('h6');
+              h5.textContent = ob.title;
+              h6.textContent = ob.body;
+              p.append(h5);
+              p.append(h6);
+            }
+          i = {{ post['id'] }};
+          var input = document.getElementById("but_com"+i);
+          input.onclick = show_com;
+        </script>
+    </p>
+</article>
+    {% if not loop.last %}
+<hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}
